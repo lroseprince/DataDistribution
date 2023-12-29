@@ -1,9 +1,9 @@
-'''
+"""
 @Time: 2023/12/29 16:25
 @Author: lroseprince
 @File:utils.py
 @Description: 用来构建环境的工具类
-'''
+"""
 from torchvision import datasets, transforms
 import torch
 import random
@@ -14,13 +14,13 @@ from Nets import CNNMnist, CNNCifar
 def reinforce_control_iid_num(dataset, alpha, args):
     """
     根据强化学习的state中的数据分布进行数据分配,为了方便起见，类只能搞连续的且在前面的类，任意挑选种类的功能后面实现
-    :param dataset_train:
+    :param dataset:
     :param alpha: alpha为state中的distribution，为list形式
     :param args:
     :return:
     """
     idxs_dict = {}
-    indexOfClients = []  # 用来存储最终选择的数据索引
+    index_clients = []  # 用来存储最终选择的数据索引
     # 将数据集分好类
     for i in range(len(dataset)):
         label = torch.tensor(dataset.targets[i]).item()
@@ -30,20 +30,20 @@ def reinforce_control_iid_num(dataset, alpha, args):
     idxs_dict = {k: idxs_dict[k] for k in sorted(idxs_dict.keys())}  # 用来记录索引
 
     # 将数值转换为相对值
-    numOfKind = []
+    num_kind = []
     total = sum(alpha)
     for i in range(args.kind):
-        numOfKind.append(int(alpha[i] / total * 1200))
+        num_kind.append(int(alpha[i] / total * 1200))
     # 根据alpha矩阵来调整数据分布
     for i in range(args.kind):
-        idxs_dict[i] = idxs_dict[i][:numOfKind[i]]
+        idxs_dict[i] = idxs_dict[i][:num_kind[i]]
     # 某些种类可以不进行下发
     idxs_dict_new = dict_slice(idxs_dict, 0, args.kind)
     # 将字典中的value代表的索引放在一个列表中，方便进行选择
     for key in idxs_dict_new.keys():
-        indexOfClients.extend(idxs_dict_new[key])
-    random.shuffle(indexOfClients)
-    return indexOfClients
+        index_clients.extend(idxs_dict_new[key])
+    random.shuffle(index_clients)
+    return index_clients
 
 
 def vicious_load_dataset(args):
@@ -98,17 +98,16 @@ def dict_slice(adict, start, end):
     :return:
     """
     keys = adict.keys()
-    dict_slice = {}
+    dict_slicing = {}
     for k in list(keys)[start: end]:
-        dict_slice[k] = adict[k]
-    return dict_slice
+        dict_slicing[k] = adict[k]
+    return dict_slicing
 
 
 def judge_index():
     """
     先通过模型参数的变化进行识别输出层参数的变化，联邦学习中通过哪几个种类的数据进行训练
     现在可以直接指定，先直接假定，后续再补充这部分代码  目前还不是很确定用所有的还是只用那几个
-    :param args:
     :return: 返回索引
     """
     index = [0, 1, 2]
@@ -118,6 +117,7 @@ def judge_index():
 def get_output_params(weights, args):
     """
     输入模型参数，将输出层的参数分离出来
+    :param args:
     :param weights:
     :return:
     """
@@ -134,6 +134,3 @@ def init_distribution(args):
     :return:
     """
     return [0.2 for i in range(args.kind)]
-
-
-

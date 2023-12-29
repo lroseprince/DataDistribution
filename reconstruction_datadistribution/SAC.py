@@ -1,15 +1,11 @@
-
 import numpy as np
-import random
 import time
+import copy
 
 import torch
-import torch.nn.functional as F
-import torch.nn as nn
-import copy
+
 from environment import Env
 from options import args_parser
-
 from reinforcement_models import action_unnormalized, SAC, ReplayBuffer
 
 start_time = time.time()
@@ -20,8 +16,8 @@ max_steps = 500
 average_rewards = []
 rewards = []
 batch_size = 256
-action_dim =
-state_dim =
+action_dim = 3
+state_dim = 8
 
 ACTION_1_MIN = 0.0  #
 ACTION_2_MIN = 1.0  #
@@ -42,15 +38,17 @@ print('State Dimensions: ' + str(state_dim))
 print('Action Dimensions: ' + str(action_dim))
 
 if __name__ == '__main__':
-    args = args_parser()
-    env = Env(args)
+    args = args_parser()  # 加载参数
+    # 将single模型那边的模型参数进行加载
+    w_global_new = torch.load("./weights/epoch1client_globalClient_mnist_single_kind1_num1.pth")
+    w_global_old = torch.load("./weights/epoch0client_globalClient_mnist_single_kind1_num1.pth")
+    env = Env(args, w_global_new, w_global_old)
     before_training = 4
     past_action = np.array([0., 0.])
 
-
     for ep in range(max_episodes):
         done = False
-        state = env.reset(args)
+        state = env.reset()
 
         if is_training and not ep % 10 == 0 and len(replay_buffer) > before_training * batch_size:
             print('Episode: ' + str(ep) + ' training')
