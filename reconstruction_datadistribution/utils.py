@@ -12,13 +12,13 @@ from Nets import CNNMnist, CNNCifar
 
 
 def reinforce_control_iid_num(dataset, alpha, args):
-    '''
+    """
     根据强化学习的state中的数据分布进行数据分配,为了方便起见，类只能搞连续的且在前面的类，任意挑选种类的功能后面实现
     :param dataset_train:
     :param alpha: alpha为state中的distribution，为list形式
     :param args:
     :return:
-    '''
+    """
     idxs_dict = {}
     indexOfClients = []  # 用来存储最终选择的数据索引
     # 将数据集分好类
@@ -47,11 +47,11 @@ def reinforce_control_iid_num(dataset, alpha, args):
 
 
 def vicious_load_dataset(args):
-    '''
+    """
     为单体用户和联邦学习按照自定义的方式加载数据
     :param args:
     :return:
-    '''
+    """
     if args.dataset == 'mnist':
         trans_mnist = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))])
         dataset_train = datasets.MNIST('./data/mnist/', train=True, download=True, transform=trans_mnist)
@@ -63,7 +63,8 @@ def vicious_load_dataset(args):
         dataset_test = datasets.FashionMNIST('./data/fashion-mnist/', train=False, download=True, transform=trans_mnist)
 
     elif args.dataset == 'cifar':
-        trans_cifar = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
+        trans_cifar = transforms.Compose(
+            [transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
         dataset_train = datasets.CIFAR10('../data/cifar', train=True, download=True, transform=trans_cifar)
         dataset_test = datasets.CIFAR10('../data/cifar', train=False, download=True, transform=trans_cifar)
 
@@ -72,12 +73,13 @@ def vicious_load_dataset(args):
 
     return dataset_train, dataset_test
 
+
 def build_model(args):
-    '''
+    """
     创建与联邦学习或者单体用户相同的模型供恶意用户学习
     :param args:
     :return:
-    '''
+    """
     if args.dataset == 'mnist':
         net = CNNMnist(args=args)
     elif args.dataset == 'fashion-mnist':
@@ -88,15 +90,50 @@ def build_model(args):
 
 
 def dict_slice(adict, start, end):
-    '''
+    """
     字典切割，只适用于连续
     :param adict:
     :param start:
     :param end:
     :return:
-    '''
+    """
     keys = adict.keys()
     dict_slice = {}
     for k in list(keys)[start: end]:
         dict_slice[k] = adict[k]
     return dict_slice
+
+
+def judge_index():
+    """
+    先通过模型参数的变化进行识别输出层参数的变化，联邦学习中通过哪几个种类的数据进行训练
+    现在可以直接指定，先直接假定，后续再补充这部分代码  目前还不是很确定用所有的还是只用那几个
+    :param args:
+    :return: 返回索引
+    """
+    index = [0, 1, 2]
+    return index
+
+
+def get_output_params(weights, args):
+    """
+    输入模型参数，将输出层的参数分离出来
+    :param weights:
+    :return:
+    """
+    if args.dataset == "mnist" or "fashion-mnist":
+        output_params = weights['fc2.weight']
+    elif args.dataset == "cifar":
+        output_params = weights['fc3.weight']
+    return output_params
+
+
+def init_distribution(args):
+    """
+    初始化的时候，或者done为true的时候将distribution设定为初始状态分布
+    :return:
+    """
+    return [0.2 for i in range(args.kind)]
+
+
+

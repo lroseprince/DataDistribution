@@ -6,6 +6,7 @@
 '''
 import argparse
 
+
 def args_parser():
     parser = argparse.ArgumentParser()
 
@@ -34,6 +35,8 @@ def args_parser():
     # 其他参数
     # other arguments
     parser.add_argument('--dataset', type=str, default='mnist', help="name of dataset")
+    parser.add_argument('--kind', type=int, default=3, help="number of datasets kind")
+    parser.add_argument('--data_num', type=int, default=6000, help="number of datasets number")
     parser.add_argument('--iid', action='store_true', default=True, help='whether i.i.d or not')
     parser.add_argument('--num_classes', type=int, default=10, help="number of classes")
     parser.add_argument('--num_channels', type=int, default=1, help="number of channels of imges")
