@@ -34,7 +34,7 @@ class Env:
         :return:
         """
         s_1 = torch.mean(get_output_params(self.net.state_dict(), self.args), dim=1).tolist()[:self.args.kind]
-        state = distribution + [self.args.kind, self.args.data_size] + s_1
+        state = distribution + s_1
         return state
 
     def get_reward(self):
@@ -46,7 +46,7 @@ class Env:
         reward = 0.
         tmp_output_vicious = get_output_params(self.net.state_dict(), self.args)
         tmp_output_global_new = get_output_params(self.w_global_new, self.args)
-        distance = torch.pairwise_distance(torch.mean(tmp_output_vicious), torch.mean(tmp_output_global_new))
+        distance = 1e2*torch.pairwise_distance(torch.mean(tmp_output_vicious,dim=1), torch.mean(tmp_output_global_new, dim=1))
         # reward = distance  # 这个值后面看看具体多大，看情况对其放缩
         print("distance:", distance)
         if distance < self.distance_old:
@@ -54,7 +54,7 @@ class Env:
         else:
             reward -= 0.1
         self.distance_old = distance
-        if distance < 1e-08:
+        if distance < 0.2:
             done = True
             reward = 1.
         return reward, distance, done
@@ -73,9 +73,8 @@ class Env:
         local_vicious = LocalUpdate(args=self.args, dataset=self.data_train, idxs=idxs_vicious)
         w_vicious, _ = local_vicious.train(net=copy.deepcopy(self.net).to(self.args.device))
         state_next = self.do_action(state[:self.args.kind], action) + \
-                     [self.args.kind, self.args.data_size] + \
                      torch.mean(get_output_params(w_vicious, self.args), dim=1).tolist()[:self.args.kind]
-        # print(":", self.get_reward())
+        #print("w_vicious:", w_vicious)
         reward, distance, done = self.get_reward()
         if done:
             best_distribution.append(state[:self.args.kind])
@@ -88,10 +87,10 @@ class Env:
         :param action:
         :return:
         """
-        print("distribution:", distribution)
+        # print("distribution:", distribution)
         for i in range(self.args.kind):
-            print("distribution[i]:",distribution[i])
-            print("action[i]:",action[i])
+            # print("distribution[i]:",distribution[i])
+            # print("action[i]:",action[i])
             distribution[i] += action[i]
             # if action[i] >= 0:
             #     if distribution[i] + action[i] <= 1.0:
